@@ -114,73 +114,7 @@ bool InferTRT10::detect(cv::Mat single_image)
         cudaStreamSynchronize(stream);
         std::vector<float> outputData(1 * outputSize);
         cudaMemcpyAsync(outputData.data(), buffers_[1], 1 * outputSize * sizeof(float), cudaMemcpyDeviceToHost, stream);
-
-        //后处理，每列取最大的index就是结果
-        string result;
-        string score;
-        float score_buff;
-        for (int row = 0; row < batchSize; row++) 
-        {
-            // 找到当前行的最大值和最小值
-            float maxVal = outputData[row * outputSize];
-            float minVal = outputData[row * outputSize];
-            for (int col = 1; col < outputSize; col++) 
-            {
-                float val = outputData[row * outputSize + col];
-                maxVal = std::max(maxVal, val);
-                minVal = std::min(minVal, val);
-            }
-
-            // 归一化当前行
-            float range = maxVal - minVal;
-            for (int col = 0; col < outputSize; col++) 
-            {
-                outputData[row * outputSize + col] = (outputData[row * outputSize + col] - minVal) / range;
-            }
-        }
-
-        // 
-        for (int i = 0; i < class_num_; i++)
-        {
-            int maxj = 0;
-            for (int j = 1; j < OUT_CHARS; j++)
-            {
-                if (outputData[OUT_CHARS * i + j] > outputData[OUT_CHARS * i + maxj])
-                
-                {    
-                    maxj = j;
-                    score_buff = outputData[OUT_CHARS * i + j];
-                }
-            }
-            if(maxj==0)
-            {
-                break;
-            }
-            if (score_buff==1){score_buff=0.999;}
-            score+=to_string((int) (score_buff*1000.));
-
-            score+="|";
-            result+=plate_gt_[maxj-1];
-        }
-        resizedImage.release();
-        outputData.clear();
-        inputData.clear();
-        cout<<"final result: "<<result<<endl;
-         // 记录结束时间
-        cudaEventRecord(stop, 0);
-        cudaEventSynchronize(stop);
-
-        // 计算时间
-        cudaEventElapsedTime(&elapsedTime, start, stop);
-
-        std::cout << "Kernel execution time: " << elapsedTime << " ms" << std::endl;
-        //break;
     }
-    // 清理
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-
-    
 }
 
 long InferTRT10::get_current_time()
@@ -194,11 +128,11 @@ long InferTRT10::get_current_time()
 int main(int argc, char** argv)
 {
     cudaSetDevice(0);
-    cv::Mat image = cv::imread("/home/westwell/Downloads/20250210-111036.jpg");
+    cv::Mat image = cv::imread("~/Downloads/20250210-111036.jpg");
     unsigned char* data;
     cudaMalloc((void**)&data, 1920 * 1080 * 1 * sizeof(unsigned char));
 
-    InferTRT10 sample("/home/westwell/Downloads/peru_plate_mk1_17_sim5454.engine", 51);
+    InferTRT10 sample("~/Downloads/test.engine", 51);
 
     // sample.build();
    
