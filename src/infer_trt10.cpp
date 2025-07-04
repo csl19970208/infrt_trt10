@@ -1,4 +1,4 @@
-#include "infer_trt10/infer_trt10.h"
+#include "infer_trt10.h"
 
 using namespace nvinfer1;
 using namespace std;
